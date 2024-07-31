@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import GVClogo from "./GVC_logo.jpg";
 
 const TrafficLight = () => {
   const [activeLight1, setActiveLight1] = useState('R');
@@ -56,7 +57,14 @@ const TrafficLight = () => {
 
   return (
     <>
-    <div style={{width:'90%',display:'flex',flexWrap:'wrap',justifyContent:"space-between"}}>
+    <div style={{padding:"30px"}}>
+    <div style={{width:'100%',display:"flex",justifyContent:"flex-end",marginBottom:"20px"}}>
+        <img style={{width:'150px',height:"50px"}} src={GVClogo}></img>
+    </div>
+    </div>
+
+
+    <div style={{width:'100%',display:'flex',flexWrap:'wrap',justifyContent:"space-around"}}>
        <div style={{display:"flex"}}>
             <div className="traffic-light">
             <div onClick={()=>handleClick1("R")} className={`light R ${activeLight1 === 'R' ? 'active' : ''}`}></div>
