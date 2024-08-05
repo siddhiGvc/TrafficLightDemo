@@ -5,6 +5,20 @@ import './App.css';
 import { Switch, FormControlLabel, FormGroup, Typography, Box } from '@mui/material';
 import SwitchButton from 'bootstrap-switch-button-react';
 import { useNavigate } from 'react-router-dom';
+import MultipleSelectChip from './components/selection';
+
+const names = [
+  'Oliver Hansen',
+  'Van Henry',
+  'April Tucker',
+  'Ralph Hubbard',
+  'Omar Alexander',
+  'Carlos Abbott',
+  'Miriam Wagner',
+  'Bradley Wilkerson',
+  'Virginia Andrews',
+  'Kelly Snyder',
+];
 
 const TrafficLight = () => {
   const [activeLight1, setActiveLight1] = useState('');
@@ -18,6 +32,8 @@ const TrafficLight = () => {
   const [isChecked, setIsChecked] = useState(true);
   const [inverterStatus,setInverterStatus]=useState('');
   const [lightStatus,setLightStatus]=useState('');
+  const [selectedJunction, setSelectedJunction]=useState(20000);
+  const [junctions, setJunctions]=useState([]);
 
   const navigate = useNavigate();
 
@@ -26,31 +42,6 @@ const TrafficLight = () => {
   };
 
 
-  // const fetchInverterData = () => {
-  //   fetch('http://gvc.co.in:8080/trafficLights/queryPowerBackup', {
-  //     method: 'POST',
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: JSON.stringify({
-  //       Junction: 20000
-  //     })
-  //   })
-  //   .then(response => response.json())  // Convert the response to JSON
-  //   .then(data => {
-  //     console.log(data);
-  //     // Access properties from the data object
-  //     setACV(data.ACV);
-  //     setACI(data.ACI);
-  //     setDCV(data.DCV);
-  //     setDCI(data.DCI);
-  //   })
-  //   .catch(err => {
-  //     console.log("Error:", err);
-  //   });
-  
-  
-  // }
 
   const online = a => moment().diff(moment.utc((a.lastHeartBeatTime)), 'minute') < 10;
   
@@ -61,13 +52,13 @@ const TrafficLight = () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        Junction: 20000
+        Junction: selectedJunction
       })
     })
     .then(response => response.json())  // Convert the response to JSON
     .then(data => {
-      console.log(data);
-      const Data=data[data.length-1]
+      // console.log(data);
+      const Data=data[data.length-1];
       // Access properties from the data object
       setActiveLight1(Data.R1);
       setActiveLight2(Data.R2);
@@ -87,6 +78,24 @@ const TrafficLight = () => {
     
   }
 
+  const getAllJunctions=()=>{
+    fetch('http://gvc.co.in:8080/trafficLights/getAllJunstion')
+    .then(response => response.json())  // Convert the response to JSON
+    .then(data => {
+      console.log(data);
+      const filteredData = data.map(item => (
+        
+         item.Junction // Replace 'paramKey' with the actual key you need
+      ));
+      console.log(filteredData);
+      setJunctions(filteredData);
+    })
+    .catch(err => {
+      console.log("Error:", err);
+    });
+    
+  }
+
   const fetchInverterStatus = () => {
     fetch('http://gvc.co.in:8080/trafficLights/getInverterStatus', {
       method: 'POST',
@@ -94,7 +103,7 @@ const TrafficLight = () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        Junction: 20000
+        Junction: selectedJunction
       })
     })
     .then(response => response.json())  // Convert the response to JSON
@@ -128,13 +137,15 @@ const TrafficLight = () => {
     navigate("/login");
   }
     fetchInverterStatus();
+    getLightData();
+    getAllJunctions();
     const interval=setInterval(()=>{
        fetchInverterStatus()
       
     },5000)
     
     return () => clearInterval(interval);
-  },[])
+  },[selectedJunction])
 
   useEffect(() => {
     let interval;
@@ -152,10 +163,7 @@ const TrafficLight = () => {
     } else {
       // Clear the interval when isChecked changes to true
       clearInterval(interval);
-      setActiveLight1('');
-      setActiveLight2('');
-      setActiveLight3('');
-      setActiveLight4('');
+    
     }
   
     // Cleanup function to clear the interval when the component unmounts
@@ -248,6 +256,9 @@ const TrafficLight = () => {
                               />
                     
                   
+                  </div>
+                  <div>
+                    <MultipleSelectChip names={junctions} selectedJunction setSelectedJunction/>
                   </div>
                   <div style={{paddingRight:"200px"}}>
                   <h4 className='inverter-stat'>Status : <span className='inverter-value'>{lightStatus}</span></h4> 
