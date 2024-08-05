@@ -1,50 +1,58 @@
 import React, { useState, useEffect } from 'react';
+import moment from "moment";
 import './App.css';
-import GVClogo from "./GVC_logo.jpg";
+
 import { Switch, FormControlLabel, FormGroup, Typography, Box } from '@mui/material';
 import SwitchButton from 'bootstrap-switch-button-react';
+import { useNavigate } from 'react-router-dom';
 
 const TrafficLight = () => {
-  const [activeLight1, setActiveLight1] = useState('R');
-  const [activeLight2, setActiveLight2] = useState('R');
-  const [activeLight3, setActiveLight3] = useState('R');
-  const [activeLight4, setActiveLight4] = useState('R');
+  const [activeLight1, setActiveLight1] = useState('');
+  const [activeLight2, setActiveLight2] = useState('');
+  const [activeLight3, setActiveLight3] = useState('');
+  const [activeLight4, setActiveLight4] = useState('');
   const [ACV, setACV] = useState('');
   const [ACI, setACI] = useState('');
   const [DCV, setDCV] = useState('');
   const [DCI, setDCI] = useState('');
   const [isChecked, setIsChecked] = useState(true);
+  const [inverterStatus,setInverterStatus]=useState('');
+  const [lightStatus,setLightStatus]=useState('');
+
+  const navigate = useNavigate();
 
   const handleChange = () => {
     setIsChecked(!isChecked);
   };
 
 
-  const fetchInverterData = () => {
-    fetch('http://gvc.co.in:8080/trafficLights/queryPowerBackup', {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        Junction: 20000
-      })
-    })
-    .then(response => response.json())  // Convert the response to JSON
-    .then(data => {
-      console.log(data);
-      // Access properties from the data object
-      setACV(data.ACV);
-      setACI(data.ACI);
-      setDCV(data.DCV);
-      setDCI(data.DCI);
-    })
-    .catch(err => {
-      console.log("Error:", err);
-    });
+  // const fetchInverterData = () => {
+  //   fetch('http://gvc.co.in:8080/trafficLights/queryPowerBackup', {
+  //     method: 'POST',
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify({
+  //       Junction: 20000
+  //     })
+  //   })
+  //   .then(response => response.json())  // Convert the response to JSON
+  //   .then(data => {
+  //     console.log(data);
+  //     // Access properties from the data object
+  //     setACV(data.ACV);
+  //     setACI(data.ACI);
+  //     setDCV(data.DCV);
+  //     setDCI(data.DCI);
+  //   })
+  //   .catch(err => {
+  //     console.log("Error:", err);
+  //   });
   
   
-  }
+  // }
+
+  const online = a => moment().diff(moment.utc((a.lastHeartBeatTime)), 'minute') < 10;
   
   const getLightData=()=>{
     fetch('http://gvc.co.in:8080/trafficLights/getLights', {
@@ -65,6 +73,13 @@ const TrafficLight = () => {
       setActiveLight2(Data.R2);
       setActiveLight3(Data.R3);
       setActiveLight4(Data.R4);
+      if(online(Data))
+      {
+        setLightStatus("Online");
+      }
+      else{
+        setLightStatus("Offline");
+      }
     })
     .catch(err => {
       console.log("Error:", err);
@@ -72,13 +87,48 @@ const TrafficLight = () => {
     
   }
 
+  const fetchInverterStatus = () => {
+    fetch('http://gvc.co.in:8080/trafficLights/getInverterStatus', {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        Junction: 20000
+      })
+    })
+    .then(response => response.json())  // Convert the response to JSON
+    .then(data => {
+      console.log(data);
+      const Data=data[data.length-1]
+      setACV(Data.ACV);
+      setACI(Data.ACI);
+      setDCV(Data.DCV);
+      setDCI(Data.DCI);
+      if(online(Data))
+        {
+          setInverterStatus("Online");
+        }
+        else{
+          setInverterStatus("Offline");
+        }
+    })
+    .catch(err => {
+      console.log("Error:", err);
+      navigate('/login');
+    });
+  
+  
+  }
+
 
   useEffect(()=>{
-    fetchInverterData();
+    // fetchInverterData();
+    fetchInverterStatus();
     setInterval(()=>{
-        fetchInverterData()
+       fetchInverterStatus()
     },5000)
-
+    
   },[])
 
   useEffect(() => {
@@ -96,10 +146,10 @@ const TrafficLight = () => {
     } else {
       // Clear the interval when isChecked changes to true
       clearInterval(interval);
-      setActiveLight1('R');
-      setActiveLight2('R');
-      setActiveLight3('R');
-      setActiveLight4('R');
+      setActiveLight1('');
+      setActiveLight2('');
+      setActiveLight3('');
+      setActiveLight4('');
     }
   
     // Cleanup function to clear the interval when the component unmounts
@@ -109,7 +159,7 @@ const TrafficLight = () => {
   
 
     useEffect(() => {
-      if(isChecked)
+      if(isChecked && activeLight1.length>0 && activeLight2.length>0 && activeLight3.length>0 && activeLight4.length>0)
       {
       fetch('http://gvc.co.in:8080/trafficLights/setLights',{
         method:'POST',
@@ -170,14 +220,13 @@ const TrafficLight = () => {
 
 }
 
+
+
   return (
     <>
     <div>
-    <div style={{paddingRight:"30px",paddingTop:"30px"}}>
-    <div style={{width:'100%',display:"flex",justifyContent:"flex-end"}}>
-        <img style={{width:'150px',height:"50px"}} src={GVClogo}></img>
-    </div>
-    </div>
+   
+      <div style={{width:'100%',height:'100px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div style={{paddingLeft:"40px",marginBottom:'10px'}}>
                     
                              <h5>Select Mode</h5>
@@ -194,7 +243,10 @@ const TrafficLight = () => {
                     
                   
                   </div>
-
+                  <div style={{paddingRight:"200px"}}>
+                  <h4 className='inverter-stat'>Status : <span className='inverter-value'>{lightStatus}</span></h4> 
+                  </div>
+       </div>
 
     <div style={{width:'100%',display:'flex',justifyContent:"space-around",gap:"10px"}}>
        <div style={{display:"flex"}}>
@@ -254,7 +306,7 @@ const TrafficLight = () => {
     </div>
    
     <div className='inverter-container'>
-      <h3 className='inverter-heading'>Inverter Status</h3>
+      <h3 className='inverter-heading'>Inverter Status: <span className='inverter-value'>{inverterStatus}</span></h3>
       <h4 className='inverter-stat'>ACV : <span className='inverter-value'>{ACV}</span></h4>
       <h4 className='inverter-stat'>ACI : <span className='inverter-value'>{ACI}</span></h4>
       <h4 className='inverter-stat'>DCV : <span className='inverter-value'>{DCV}</span></h4>
