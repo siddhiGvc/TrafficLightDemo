@@ -123,12 +123,17 @@ const TrafficLight = () => {
 
 
   useEffect(()=>{
-    // fetchInverterData();
+  if(!sessionStorage.getItem("token"))
+  {
+    navigate("/login");
+  }
     fetchInverterStatus();
-    setInterval(()=>{
+    const interval=setInterval(()=>{
        fetchInverterStatus()
+      
     },5000)
     
+    return () => clearInterval(interval);
   },[])
 
   useEffect(() => {
@@ -142,6 +147,7 @@ const TrafficLight = () => {
         if (isChecked) {
           clearInterval(interval);
         }
+       
       }, 5000);
     } else {
       // Clear the interval when isChecked changes to true
@@ -227,7 +233,7 @@ const TrafficLight = () => {
     <div>
    
       <div style={{width:'100%',height:'100px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <div style={{paddingLeft:"40px",marginBottom:'10px'}}>
+            <div style={{paddingLeft:"30px",marginBottom:'10px'}}>
                     
                              <h5>Select Mode</h5>
                                    <SwitchButton
